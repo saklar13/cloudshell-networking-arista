@@ -48,7 +48,7 @@ class AristaSNMPAutoload(object):
 
     def load_arista_mib(self):
         """
-        Loads Cisco specific mibs inside snmp handler
+        Loads Arista specific mibs inside snmp handler
 
         """
         path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'mibs'))
@@ -134,7 +134,7 @@ class AristaSNMPAutoload(object):
         raise Exception(error_message)
 
     def _load_snmp_tables(self):
-        """ Load all cisco required snmp tables
+        """ Load all Arista required snmp tables
 
         :return:
         """
@@ -486,7 +486,7 @@ class AristaSNMPAutoload(object):
         if not self.if_table:
             return
         port_channel_dic = {index: port for index, port in self.if_table.iteritems() if
-                            'channel' in port[self.IF_ENTITY] and '.' not in port[self.IF_ENTITY]}
+                            'channel' in port[self.IF_ENTITY].lower() and '.' not in port[self.IF_ENTITY]}
         self.logger.info('Loading Port Channels:')
         for key, value in port_channel_dic.iteritems():
             interface_model = value[self.IF_ENTITY]
@@ -716,11 +716,19 @@ class AristaSNMPAutoload(object):
             ent_alias_mapping_identifier = self.snmp.get(('ENTITY-MIB', 'entAliasMappingIdentifier', port_index, 0))
             port_id = int(ent_alias_mapping_identifier['entAliasMappingIdentifier'].split('.')[-1])
         except Exception as e:
-            self.logger.error(e.message)
-
-            if_table_re = "/".join(re.findall('\d+', port_descr))
-            for interface in self.if_table.values():
-                if interface[self.IF_ENTITY].endswith(if_table_re):
-                    port_id = int(interface['suffix'])
-                    break
+            self.logger.debug("SNMP Error {}".format(e.message))
+            port_if_re = re.findall('\d+', port_descr)
+            if port_if_re:
+                if_table_re = "/".join(port_if_re)
+                for interface in self.if_table.values():
+                    if "ifType" not in interface.keys():
+                        interface["ifType"] = self.snmp.get_property("IF-MIB", "ifType", interface.get("suffix", ""))
+                    if not re.search("ethernet|other", interface.get("ifType", ""), re.IGNORECASE):
+                        continue
+                    if re.search(
+                            r"^(?!.*null|.*{0})\D*{1}(/\D+|$)".format(self.port_exclude_pattern.replace("|", "|.*"),
+                                                                      if_table_re),
+                            interface.get("ifDescr", ""), re.IGNORECASE):
+                        port_id = int(interface.get("suffix", ""))
+                        break
         return port_id

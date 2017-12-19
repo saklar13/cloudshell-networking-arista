@@ -1,2 +1,2 @@
-cloudshell-networking-devices
-cloudshell-networking-cisco
+cloudshell-networking-devices>=1.0,<1.1
+cloudshell-networking-cisco>=4.0,<4.1

@@ -25,7 +25,7 @@ class AristaEnableCommandMode(CommandMode):
 
     def __init__(self, resource_config, api):
         """
-        Initialize Enable command mode - default command mode for Cisco Shells
+        Initialize Enable command mode - default command mode for Arista Shells
 
         :param resource_config:
         """

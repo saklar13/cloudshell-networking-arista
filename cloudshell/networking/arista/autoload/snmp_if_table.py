@@ -31,7 +31,7 @@ class SnmpIfTable(object):
                                                          port_attributes_snmp_tables=self.port_attributes_snmp_tables)
 
     def _load_snmp_tables(self):
-        """ Load all cisco required snmp tables"""
+        """ Load all arista required snmp tables"""
 
         self._logger.info('Start loading MIB tables:')
         self._if_table = self._snmp.get_table('IF-MIB', self.IF_ENTITY)

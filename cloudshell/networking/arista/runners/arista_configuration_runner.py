@@ -1,16 +1,18 @@
-from cloudshell.networking.devices.runners.configuration_runner import ConfigurationRunner
+from cloudshell.devices.runners.configuration_runner import ConfigurationRunner
 
-from cloudshell.networking.arista.cli.arista_cli_handler import AristaCliHandler
-from cloudshell.networking.cisco.flow.cisco_restore_flow import CiscoRestoreFlow
-from cloudshell.networking.cisco.flow.cisco_save_flow import CiscoSaveFlow
+from cloudshell.networking.arista.flows.arista_restore_flow import AristaRestoreFlow
+from cloudshell.networking.arista.flows.arista_save_flow import AristaSaveFlow
 
 
 class AristaConfigurationRunner(ConfigurationRunner):
-    def __init__(self, cli, logger, context, api):
-        super(AristaConfigurationRunner, self).__init__(logger, context, api)
-        self._cli_handler = AristaCliHandler(cli, context, logger, api)
-        self._save_flow = CiscoSaveFlow(cli_handler=self._cli_handler,
-                                        logger=self._logger)
-        self._restore_flow = CiscoRestoreFlow(cli_handler=self._cli_handler,
-                                              logger=self._logger)
-        self.file_system = 'flash:'
+    @property
+    def restore_flow(self):
+        return AristaRestoreFlow(self.cli_handler, self._logger)
+
+    @property
+    def save_flow(self):
+        return AristaSaveFlow(self.cli_handler, self._logger)
+
+    @property
+    def file_system(self):
+        return "flash:"

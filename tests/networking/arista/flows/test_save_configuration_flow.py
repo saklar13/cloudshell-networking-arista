@@ -1,10 +1,11 @@
 from unittest import TestCase
 
 from mock import MagicMock
-from cloudshell.networking.cisco.flows.cisco_save_flow import CiscoSaveFlow
+
+from cloudshell.networking.arista.flows.arista_save_flow import AristaSaveFlow
 
 
-class TestCiscoSaveConfigurationFlow(TestCase):
+class TestAristaSaveConfigurationFlow(TestCase):
     def _get_handler(self, output):
         cli = MagicMock()
         self.session = MagicMock()
@@ -13,7 +14,7 @@ class TestCiscoSaveConfigurationFlow(TestCase):
         cliservice.__enter__.return_value = self.session
         cli.get_cli_service.return_value = cliservice
         logger = MagicMock()
-        return CiscoSaveFlow(cli_handler=cli, logger=logger)
+        return AristaSaveFlow(cli_handler=cli, logger=logger)
 
     def test_save_configuration(self):
         save_flow = self._get_handler("""N5K-L3-Sw1#

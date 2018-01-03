@@ -1,35 +1,35 @@
 from unittest import TestCase
 
-from mock import MagicMock
-from cloudshell.devices.standards.networking.configuration_attributes_structure import \
-    create_networking_resource_from_context
+from mock import MagicMock, patch
 
-from cloudshell.networking.apply_connectivity.apply_connectivity_operation import apply_connectivity_changes
-from cloudshell.networking.cisco.runners.cisco_connectivity_runner import CiscoConnectivityRunner
-from cloudshell.shell.core.context import ResourceCommandContext, ResourceContextDetails, ReservationContextDetails
+from cloudshell.networking.arista.runners.arista_connectivity_runner import AristaConnectivityRunner
 
 
-class TestCiscoConnectivityOperations(TestCase):
-    def _get_handler(self):
-        self.cli = MagicMock()
-        self.snmp = MagicMock()
-        self.api = MagicMock()
-        self.logger = MagicMock()
-        context = ResourceCommandContext()
-        context.resource = ResourceContextDetails()
-        context.resource.name = 'resource_name'
-        context.reservation = ReservationContextDetails()
-        context.reservation.reservation_id = 'c3b410cb-70bd-4437-ae32-15ea17c33a74'
-        context.resource.attributes = dict()
-        context.resource.attributes['CLI Connection Type'] = 'Telnet'
-        context.resource.attributes['Sessions Concurrency Limit'] = '1'
-        supported_os = ["CAT[ -]?OS", "IOS[ -]?X?[ER]?"]
-        resource_config = create_networking_resource_from_context("", ["supported_os"], context)
-        return CiscoConnectivityRunner(cli=self.cli, logger=self.logger, api=self.api,
-                                       resource_config=resource_config)
+class TestAristaConnectivityOperations(TestCase):
+    def setUp(self):
+        self.handler = AristaConnectivityRunner(MagicMock(), MagicMock())
 
-    def test_apply_connectivity_changes_validates_request_parameter(self):
-        request = """{
+    @patch("cloudshell.networking.arista.runners.arista_connectivity_runner."
+           "AristaConnectivityRunner.remove_vlan_flow")
+    def test_remove_vlan_triggered(self, rem_vlan_mock):
+        rem_vlan_exec_flow_mock = MagicMock(return_value="")
+        rem_vlan_mock.execute_flow = rem_vlan_exec_flow_mock
+        request = self._get_request().replace("vlan_config_type", "removeVlan")
+        self.handler.apply_connectivity_changes(request)
+        rem_vlan_exec_flow_mock.assert_called_once()
+
+    @patch("cloudshell.networking.arista.runners.arista_connectivity_runner."
+           "AristaConnectivityRunner.add_vlan_flow")
+    def test_add_vlan_triggered(self, add_vlan_mock):
+            add_vlan_exec_flow_mock = MagicMock(return_value="")
+            add_vlan_mock.execute_flow = add_vlan_exec_flow_mock
+            request = self._get_request().replace("vlan_config_type", "setVlan")
+            self.handler.apply_connectivity_changes(request)
+            add_vlan_exec_flow_mock.assert_called_once()
+
+    @staticmethod
+    def _get_request():
+        return """{
         "driverRequest" : {
             "actions" : [{
                     "connectionId" : "0b0f37df-0f70-4a8a-bd7b-fd21e5fbc23d",
@@ -76,11 +76,8 @@ class TestCiscoConnectivityOperations(TestCase):
                         "type" : "actionTarget"
                     },
                     "customActionAttributes" : [],
-                    "type" : "setVlan"
+                    "type" : "vlan_config_type"
                 }
             ]
         }
         }"""
-        handler = self._get_handler()
-        handler.get_port_name = MagicMock(return_value='port-channel2')
-        handler.apply_connectivity_changes(request)

@@ -2,14 +2,15 @@ from cloudshell.devices.flows.cli_action_flows import EnableSnmpFlow
 from cloudshell.snmp.snmp_parameters import SNMPV3Parameters
 
 from cloudshell.networking.arista.cli.arista_cli_handler import AristaCliHandler
-from cloudshell.networking.arista.command_actions.enable_disable_snmp_actions import EnableDisableSnmpActions
+from cloudshell.networking.arista.command_actions.enable_disable_snmp_actions \
+    import EnableDisableSnmpActions
 
 
 class AristaEnableSnmpFlow(EnableSnmpFlow):
     def __init__(self, cli_handler, logger):
         """
         Enable snmp flow
-        :param cli_handler:
+        :param AristaCliHandler cli_handler:
         :param logger:
         :return:
         """
@@ -28,7 +29,7 @@ class AristaEnableSnmpFlow(EnableSnmpFlow):
                 if isinstance(snmp_parameters, SNMPV3Parameters):
                     raise Exception(self.__class__.__name__, 'Do not support SNMP V3')
                 else:
-                    if snmp_actions.is_configured(snmp_parameters.snmp_community):
+                    if not snmp_actions.is_configured(snmp_parameters.snmp_community):
                         snmp_actions.enable_snmp(snmp_parameters.snmp_community)
                     else:
                         self._logger.debug("SNMP Community '{}' already configured".format(

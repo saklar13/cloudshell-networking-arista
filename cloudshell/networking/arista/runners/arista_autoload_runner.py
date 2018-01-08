@@ -1,19 +1,14 @@
-from cloudshell.networking.arista.flows.arista_autoload_flow import AristaAutoloadFlow
-from cloudshell.networking.devices.runners.autoload_runner_new import AutoloadRunner
+from cloudshell.devices.runners.autoload_runner import AutoloadRunner
 
-from cloudshell.networking.arista.snmp.arista_snmp_handler import AristaSnmpHandler
+from cloudshell.networking.arista.flows.arista_autoload_flow import AristaAutoloadFlow
 
 
 class AristaAutoloadRunner(AutoloadRunner):
-    def __init__(self, cli, logger, context, api, supported_os):
-        super(AristaAutoloadRunner, self).__init__(context, supported_os)
-        self._cli = cli
-        self._api = api
+    def __init__(self, logger, resource_config, snmp_handler):
+        super(AristaAutoloadRunner, self).__init__(resource_config)
         self._logger = logger
+        self.snmp_handler = snmp_handler
 
     @property
-    def snmp_handler(self):
-        return AristaSnmpHandler(self._cli, self._context, self._logger, self._api)
-
-    def create_autoload_flow(self):
+    def autoload_flow(self):
         return AristaAutoloadFlow(self.snmp_handler, self._logger)

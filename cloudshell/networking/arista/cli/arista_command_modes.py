@@ -6,13 +6,14 @@ class AristaDefaultCommandMode(CommandMode):
     ENTER_COMMAND = ''
     EXIT_COMMAND = ''
 
-    def __init__(self, context):
+    def __init__(self, resource_config, api):
         """
         Initialize Default command mode, only for cases when session started not in enable mode
 
-        :param context:
+        :param resource_config:
         """
-        self._context = context
+        self.resource_config = resource_config
+        self._api = api
         CommandMode.__init__(self, AristaDefaultCommandMode.PROMPT, AristaDefaultCommandMode.ENTER_COMMAND,
                              AristaDefaultCommandMode.EXIT_COMMAND)
 
@@ -22,13 +23,14 @@ class AristaEnableCommandMode(CommandMode):
     ENTER_COMMAND = 'enable'
     EXIT_COMMAND = ''
 
-    def __init__(self, context):
+    def __init__(self, resource_config, api):
         """
-        Initialize Enable command mode - default command mode for Cisco Shells
+        Initialize Enable command mode - default command mode for Arista Shells
 
-        :param context:
+        :param resource_config:
         """
-        self._context = context
+        self.resource_config = resource_config
+        self._api = api
 
         CommandMode.__init__(self, AristaEnableCommandMode.PROMPT, AristaEnableCommandMode.ENTER_COMMAND,
                              AristaEnableCommandMode.EXIT_COMMAND)
@@ -39,13 +41,15 @@ class AristaConfigCommandMode(CommandMode):
     ENTER_COMMAND = 'configure terminal'
     EXIT_COMMAND = 'end'
 
-    def __init__(self, context):
+    def __init__(self, resource_config, api):
         """
         Initialize Config command mode
 
-        :param context:
+        :param resource_config:
         """
-        self._context = context
+        self.resource_config = resource_config
+        self._api = api
+
         CommandMode.__init__(self, AristaConfigCommandMode.PROMPT,
                              AristaConfigCommandMode.ENTER_COMMAND,
                              AristaConfigCommandMode.EXIT_COMMAND)

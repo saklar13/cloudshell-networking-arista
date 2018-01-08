@@ -1,7 +1,8 @@
 from cloudshell.cli.cli_service_impl import CliServiceImpl as CliService
 from cloudshell.cli.command_template.command_template_executor import CommandTemplateExecutor
 
-from cloudshell.networking.arista.command_templates.arista_configuration_templates import ENABLE_SNMP, SHOW_SNMP_COMMUNITY, DISABLE_SNMP
+from cloudshell.networking.arista.command_templates.arista_configuration_templates import ENABLE_SNMP,\
+    SHOW_SNMP_COMMUNITY, DISABLE_SNMP
 
 
 class EnableDisableSnmpActions(object):
@@ -17,14 +18,14 @@ class EnableDisableSnmpActions(object):
         self._cli_service = cli_service
         self._logger = logger
 
-    def configured(self, snmp_community):
+    def is_configured(self, snmp_community):
         """
         Check snmp community configured
         :param snmp_community:
         :return:
         """
-        s = CommandTemplateExecutor(self._cli_service, SHOW_SNMP_COMMUNITY).execute_command()
-        return 'Community name: %s' % snmp_community in s
+        output = CommandTemplateExecutor(self._cli_service, SHOW_SNMP_COMMUNITY).execute_command()
+        return snmp_community in output
 
     def enable_snmp(self, snmp_community):
         """
@@ -34,10 +35,9 @@ class EnableDisableSnmpActions(object):
 
         return CommandTemplateExecutor(self._cli_service, ENABLE_SNMP).execute_command(snmp_community=snmp_community)
 
-    def disable_snmp(self):
+    def disable_snmp(self, snmp_community):
         """
         Disable SNMP
         :return:
         """
-        output = CommandTemplateExecutor(self._cli_service, DISABLE_SNMP).execute_command()
-        return output
+        return CommandTemplateExecutor(self._cli_service, DISABLE_SNMP).execute_command(snmp_community=snmp_community)

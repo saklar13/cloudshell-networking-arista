@@ -1,74 +1,78 @@
-import re
-import time
-
+from cloudshell.cli.cli_service_impl import CliServiceImpl
 from cloudshell.cli.command_mode_helper import CommandModeHelper
-from cloudshell.networking.cli_handler_impl import CliHandlerImpl
-from cloudshell.shell.core.api_utils import decrypt_password_from_attribute
+from cloudshell.cli.session.ssh_session import SSHSession
+from cloudshell.cli.session.telnet_session import TelnetSession
+from cloudshell.devices.cli_handler_impl import CliHandlerImpl
 
 from cloudshell.networking.arista.cli.arista_command_modes import AristaDefaultCommandMode, \
     AristaEnableCommandMode, AristaConfigCommandMode
+from cloudshell.networking.arista.sessions.console_ssh_session import ConsoleSSHSession
+from cloudshell.networking.arista.sessions.console_telnet_session import ConsoleTelnetSession
 
 
 class AristaCliHandler(CliHandlerImpl):
-    def __init__(self, cli, context, logger, api):
-        super(AristaCliHandler, self).__init__(cli, context, logger, api)
-        modes = CommandModeHelper.create_command_mode(context)
-        self.default_mode = modes[AristaDefaultCommandMode]
-        self.enable_mode = modes[AristaEnableCommandMode]
-        self.config_mode = modes[AristaConfigCommandMode]
+    def __init__(self, cli, resource_config, logger, api):
+        super(AristaCliHandler, self).__init__(cli, resource_config, logger, api)
+        self.modes = CommandModeHelper.create_command_mode(resource_config, api)
 
-    def default_mode_service(self):
-        return self.get_cli_service(self.enable_mode)
+    @property
+    def default_mode(self):
+        return self.modes[AristaDefaultCommandMode]
 
-    def config_mode_service(self):
-        return self.get_cli_service(self.config_mode)
+    @property
+    def enable_mode(self):
+        return self.modes[AristaEnableCommandMode]
+
+    @property
+    def config_mode(self):
+        return self.modes[AristaConfigCommandMode]
+
+    def _console_ssh_session(self):
+        console_port = int(self.resource_config.console_port)
+        session = ConsoleSSHSession(self.resource_config.console_server_ip_address,
+                                    self.username,
+                                    self.password,
+                                    console_port,
+                                    self.on_session_start)
+        return session
+
+    def _console_telnet_session(self):
+        console_port = int(self.resource_config.console_port)
+        return [ConsoleTelnetSession(self.resource_config.console_server_ip_address,
+                                     self.username,
+                                     self.password,
+                                     console_port,
+                                     self.on_session_start),
+                ConsoleTelnetSession(self.resource_config.console_server_ip_address,
+                                     self.username,
+                                     self.password,
+                                     console_port,
+                                     self.on_session_start,
+                                     start_with_new_line=True)
+                ]
+
+    def _new_sessions(self):
+        if self.cli_type.lower() == SSHSession.SESSION_TYPE.lower():
+            new_sessions = self._ssh_session()
+        elif self.cli_type.lower() == TelnetSession.SESSION_TYPE.lower():
+            new_sessions = self._telnet_session()
+        elif self.cli_type.lower() == "console":
+            new_sessions = list()
+            new_sessions.append(self._console_ssh_session())
+            new_sessions.extend(self._console_telnet_session())
+        else:
+            new_sessions = [self._ssh_session(), self._telnet_session(),
+                            self._console_ssh_session()]
+            new_sessions.extend(self._console_telnet_session())
+        return new_sessions
 
     def on_session_start(self, session, logger):
         """Send default commands to configure/clear session outputs
         :return:
         """
-
-        self.enter_enable_mode(session=session, logger=logger)
-        session.hardware_expect('terminal length 0', AristaEnableCommandMode.PROMPT, logger)
-        session.hardware_expect('terminal width 300', AristaEnableCommandMode.PROMPT, logger)
-        # session.hardware_expect('terminal no exec prompt timestamp', EnableCommandMode.PROMPT, logger)
-        self._enter_config_mode(session, logger)
-        session.hardware_expect('no logging console', AristaConfigCommandMode.PROMPT, logger)
-        session.hardware_expect('exit', AristaEnableCommandMode.PROMPT, logger)
-
-    def _enter_config_mode(self, session, logger):
-        max_retries = 5
-        error_message = 'Failed to enter config mode, please check logs, for details'
-        output = session.hardware_expect(AristaConfigCommandMode.ENTER_COMMAND,
-                                         '{0}|{1}'.format(AristaConfigCommandMode.PROMPT, AristaEnableCommandMode.PROMPT), logger)
-
-        if not re.search(AristaConfigCommandMode.PROMPT, output):
-            retries = 0
-            while not re.search(r"[Cc]onfiguration [Ll]ocked", output, re.IGNORECASE) or retries == max_retries:
-                time.sleep(5)
-                output = session.hardware_expect(AristaConfigCommandMode.ENTER_COMMAND,
-                                                 '{0}|{1}'.format(AristaConfigCommandMode.PROMPT, AristaEnableCommandMode.PROMPT),
-                                                 logger)
-            if not re.search(AristaConfigCommandMode.PROMPT, output):
-                raise Exception('_enter_config_mode', error_message)
-
-    def enter_enable_mode(self, session, logger):
-        """
-        Enter enable mode
-
-        :param session:
-        :param logger:
-        :raise Exception:
-        """
-        result = session.hardware_expect('', '{0}|{1}'.format(AristaDefaultCommandMode.PROMPT, AristaEnableCommandMode.PROMPT),
-                                         logger)
-        if not re.search(AristaEnableCommandMode.PROMPT, result):
-            enable_password = decrypt_password_from_attribute(api=self._api,
-                                                              password_attribute_name='Enable Password',
-                                                              context=self._context)
-            expect_map = {'[Pp]assword': lambda session, logger: session.send_line(enable_password, logger)}
-            session.hardware_expect('enable', AristaEnableCommandMode.PROMPT, action_map=expect_map, logger=logger)
-            result = session.hardware_expect('', '{0}|{1}'.format(AristaDefaultCommandMode.PROMPT, AristaEnableCommandMode.PROMPT),
-                                             logger)
-            if not re.search(AristaEnableCommandMode.PROMPT, result):
-                raise Exception('enter_enable_mode', 'Enable password is incorrect')
+        cli_service = CliServiceImpl(session, self.enable_mode, logger)
+        cli_service.send_command("terminal length 0", AristaEnableCommandMode.PROMPT)
+        cli_service.send_command("terminal width 300", AristaEnableCommandMode.PROMPT)
+        cli_service.send_command("terminal no exec prompt timestamp", AristaEnableCommandMode.PROMPT)
+        with cli_service.enter_mode(self.config_mode) as config_session:
+            config_session.send_command("no logging console", AristaConfigCommandMode.PROMPT)

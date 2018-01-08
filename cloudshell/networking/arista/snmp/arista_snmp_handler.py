@@ -1,22 +1,15 @@
-from cloudshell.networking.arista.cli.arista_cli_handler import AristaCliHandler
 from cloudshell.networking.arista.flows.arista_disable_snmp_flow import AristaDisableSnmpFlow
-from cloudshell.networking.snmp_handler import SnmpHandler
-
 from cloudshell.networking.arista.flows.arista_enable_snmp_flow import AristaEnableSnmpFlow
+from cloudshell.devices.snmp_handler import SnmpHandler
 
 
 class AristaSnmpHandler(SnmpHandler):
-    def __init__(self, cli, context, logger, api):
-        super(AristaSnmpHandler, self).__init__(context, logger)
-        self._cli = cli
-        self._api = api
-
-    @property
-    def arista_cli_handler(self):
-        return AristaCliHandler(self._cli, self._context, self._logger, self._api)
+    def __init__(self, resource_config, logger, api, cli_handler):
+        super(AristaSnmpHandler, self).__init__(resource_config, logger, api)
+        self.cli_handler = cli_handler
 
     def _create_enable_flow(self):
-        return AristaEnableSnmpFlow(self.arista_cli_handler, self._logger)
+        return AristaEnableSnmpFlow(self.cli_handler, self._logger)
 
     def _create_disable_flow(self):
-        return AristaDisableSnmpFlow(self.arista_cli_handler, self._logger)
+        return AristaDisableSnmpFlow(self.cli_handler, self._logger)

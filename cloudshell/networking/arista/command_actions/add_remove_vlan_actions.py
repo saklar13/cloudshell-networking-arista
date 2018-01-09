@@ -27,7 +27,7 @@ class AddRemoveVlanActions(object):
         :return: True or False
         """
 
-        return re.search("switchport.*vlan.*{0}".format(str(vlan_range)), current_config,
+        return re.search("switchport.+vlan\s+{0}$".format(str(vlan_range)), current_config,
                          re.MULTILINE | re.IGNORECASE | re.DOTALL)
 
     def create_vlan(self, vlan_range, action_map=None, error_map=None):

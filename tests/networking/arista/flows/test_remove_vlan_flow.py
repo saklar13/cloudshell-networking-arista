@@ -5,7 +5,7 @@ from mock import MagicMock, patch
 from cloudshell.networking.arista.flows.arista_remove_vlan_flow import AristaRemoveVlanFlow
 
 
-class TestCiscoRemoveVlanFlow(TestCase):
+class TestAristaRemoveVlanFlow(TestCase):
     def setUp(self):
         self._handler = AristaRemoveVlanFlow(MagicMock(), MagicMock())
 

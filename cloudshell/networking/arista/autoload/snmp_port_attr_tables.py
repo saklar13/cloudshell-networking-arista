@@ -7,7 +7,6 @@ class SnmpPortAttrTables(object):
         self._logger = logger
         self._lldp_remote_table = None
         self._lldp_local_table = None
-        self._cdp_table = None
         self._duplex_table = None
         self._ip_v4_table = None
         self._ip_v6_table = None
@@ -31,13 +30,6 @@ class SnmpPortAttrTables(object):
                 self._lldp_local_table = defaultdict()
             self._logger.info('lldpLocPortDesc table loaded')
         return self._lldp_local_table
-
-    @property
-    def cdp_table(self):
-        if self._cdp_table is None:
-            self._cdp_table = self._snmp.get_table('CISCO-CDP-MIB', 'cdpCacheDeviceId') or defaultdict()
-            self._logger.info('cdpCacheDeviceId table loaded')
-        return self._cdp_table
 
     @property
     def duplex_table(self):

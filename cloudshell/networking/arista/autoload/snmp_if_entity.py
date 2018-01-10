@@ -110,7 +110,7 @@ class SnmpIfEntity(object):
         return result
 
     def _get_adjacent(self):
-        """Get connected device interface and device name to the specified port id, using cdp or lldp protocols
+        """Get connected device interface and device name to the specified port id, using lldp protocols
 
         :param interface_id: port id
         :return: device's name and port connected to port id
@@ -119,12 +119,7 @@ class SnmpIfEntity(object):
 
         result_template = '{remote_host} through {remote_port}'
         result = ''
-        for key, value in self._port_attributes_snmp_tables.cdp_table.iteritems():
-            if str(key).startswith(str(self.if_index)):
-                port = self._snmp.get_property('CISCO-CDP-MIB', 'cdpCacheDevicePort', key)
-                result = result_template.format(remote_host=value.get('cdpCacheDeviceId', ''), remote_port=port)
-                break
-        if result == '' and self._port_attributes_snmp_tables.lldp_local_table:
+        if self._port_attributes_snmp_tables.lldp_local_table:
             interface_name = self.if_name.lower()
             if interface_name:
                 key = self._port_attributes_snmp_tables.lldp_local_table.get(interface_name, None)

@@ -5,7 +5,7 @@ from mock import MagicMock, patch
 from cloudshell.networking.arista.flows.arista_restore_flow import AristaRestoreFlow
 
 
-class TestCiscoSaveConfigurationFlow(TestCase):
+class TestAristaSaveConfigurationFlow(TestCase):
     PATH = "ftp://admin:password@10.10.10.10/CloudShell/config"
 
     def setUp(self):

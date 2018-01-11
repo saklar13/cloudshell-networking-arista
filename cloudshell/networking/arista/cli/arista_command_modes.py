@@ -86,6 +86,7 @@ class AristaConfigCommandMode(CommandMode):
             AristaConfigCommandMode.PROMPT,
             AristaConfigCommandMode.ENTER_COMMAND,
             AristaConfigCommandMode.EXIT_COMMAND,
+            enter_error_map=self.enter_action_map(),
 
         )
 

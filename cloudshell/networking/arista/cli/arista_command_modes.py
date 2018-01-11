@@ -28,7 +28,7 @@ class AristaDefaultCommandMode(CommandMode):
 
 
 class AristaEnableCommandMode(CommandMode):
-    PROMPT = r'#\s*$'
+    PROMPT = r'(?:(?!\)).)#\s*$'
     ENTER_COMMAND = 'enable'
     EXIT_COMMAND = ''
 
@@ -86,7 +86,7 @@ class AristaConfigCommandMode(CommandMode):
             AristaConfigCommandMode.PROMPT,
             AristaConfigCommandMode.ENTER_COMMAND,
             AristaConfigCommandMode.EXIT_COMMAND,
-            enter_error_map=self.enter_action_map(),
+            enter_action_map=self.enter_action_map(),
 
         )
 
